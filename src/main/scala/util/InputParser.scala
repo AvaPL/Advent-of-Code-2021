@@ -7,17 +7,21 @@ trait InputParser[T] {
 }
 
 object InputParser {
-  def split(string: String, delimiter: String): Seq[String] = {
-    val quotedDelimiter = Regex.quote(delimiter)
-    string.split(quotedDelimiter).toSeq
+
+  implicit class InputStringOps(val string: String) extends AnyVal {
+    def splitBy(delimiter: String): Seq[String] = {
+      val quotedDelimiter = Regex.quote(delimiter)
+      string.split(quotedDelimiter).toSeq
+    }
+
+    def splitByRegex(regex: String): Seq[String] =
+      string.split(regex).toSeq
+
+    def splitLines: Seq[String] =
+      splitBy("\n")
+
+    def splitBlocks: Seq[String] =
+      splitBy("\n\n")
   }
 
-  def splitRegex(string: String, regex: String): Seq[String] =
-    string.split(regex).toSeq
-
-  def lines(string: String): Seq[String] =
-    split(string, "\n")
-
-  def blocks(string: String): Seq[String] =
-    split(string, "\n\n")
 }
