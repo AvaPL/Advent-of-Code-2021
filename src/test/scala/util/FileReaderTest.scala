@@ -38,10 +38,10 @@ class FileReaderTest extends AnyWordSpec with Matchers {
     }
 
     "given filename of an non-existing file" should {
-      "return a failure" in {
+      "throw a FileNotFoundException" in {
         lazy val result = FileReader.readUnsafe("input/does_not_exist.txt")
 
-        an[FileNotFoundException] shouldBe thrownBy(result)
+        a[FileNotFoundException] shouldBe thrownBy(result)
       }
     }
   }
