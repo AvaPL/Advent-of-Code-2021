@@ -12,8 +12,7 @@ object Puzzle1 extends App {
   val input = FileReader.readUnsafe("input/day1/puzzle1.txt")
   val measurements = Puzzle1InputParser.parse(input)
   val result = measurements.sliding(2).count {
-    case Seq(x, y) if x < y => true
-    case _ => false
+    case Seq(x, y) => x < y
   }
   println(result)
 }
