@@ -13,16 +13,11 @@ object Puzzle2InputParser extends InputParser[Seq[(String, Int)]] {
 object Puzzle2 extends App {
   val input = FileReader.readUnsafe("input/day2/puzzle2.txt")
   val moveSequence = Puzzle2InputParser.parse(input)
-  var aim = 0
-  val (horizontal, depth) = moveSequence.foldLeft((0, 0)) {
-    case ((horizontal, depth), (direction, value)) => direction match {
-      case "forward" => (horizontal + value, depth + value * aim)
-      case "up" =>
-        aim -= value
-        (horizontal, depth)
-      case "down" =>
-        aim += value
-        (horizontal, depth)
+  val (horizontal, depth, _) = moveSequence.foldLeft((0, 0, 0)) {
+    case ((horizontal, depth, aim), (direction, value)) => direction match {
+      case "forward" => (horizontal + value, depth + value * aim, aim)
+      case "up" => (horizontal, depth, aim - value)
+      case "down" => (horizontal, depth, aim + value)
     }
   }
   println(horizontal * depth)
