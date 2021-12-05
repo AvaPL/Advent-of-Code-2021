@@ -22,7 +22,6 @@ object Puzzle1 extends App {
   val input = FileReader.readUnsafe("input/day5/puzzle1.txt")
   val lines = Puzzle1InputParser.parse(input)
   val horizontalAndVerticalLines = lines.filter(line => line.isVertical || line.isHorizontal)
-  val ventsMap = VentsMap(1000)
-  horizontalAndVerticalLines.flatMap(_.coveredPoints).foreach(ventsMap.markPoint)
+  val ventsMap = horizontalAndVerticalLines.foldLeft(VentsMap(1000))(_.markLine(_))
   println(ventsMap.countDangerousAreas)
 }
