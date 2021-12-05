@@ -10,16 +10,11 @@ case class Line(start: Point, end: Point) {
 
   lazy val isDiagonal: Boolean = abs(start.x - end.x) == abs(start.y - end.y)
 
-  lazy val coveredPoints: Seq[Point] = {
-    if (isHorizontal)
-      horizontalCoveredPoints
-    else if (isVertical)
-      verticalCoveredPoints
-    else if (isDiagonal)
-      diagonalCoveredPoints
-    else
-      Seq.empty
-  }
+  lazy val coveredPoints: Seq[Point] =
+    if (isHorizontal) horizontalCoveredPoints
+    else if (isVertical) verticalCoveredPoints
+    else if (isDiagonal) diagonalCoveredPoints
+    else Seq.empty
 
   private lazy val horizontalCoveredPoints =
     min(start.y, end.y) to max(start.y, end.y) map (Point(start.x, _))
