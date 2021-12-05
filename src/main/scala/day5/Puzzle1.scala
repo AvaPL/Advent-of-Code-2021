@@ -5,7 +5,10 @@ import util.InputParser._
 
 object Puzzle1InputParser extends InputParser[Seq[Line]] {
   override def parse(string: String): Seq[Line] =
-    string.splitLines.map(_.splitBy(" -> ")).map {
+    string.splitLines.map(parseLine)
+
+  private def parseLine(lineRaw: String) =
+    lineRaw.splitBy(" -> ") match {
       case Seq(startRaw, endRaw) =>
         val start = parsePoint(startRaw)
         val end = parsePoint(endRaw)
