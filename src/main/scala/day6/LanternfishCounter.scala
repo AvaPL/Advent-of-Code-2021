@@ -6,8 +6,10 @@ object LanternfishCounter {
     val countArray = lanternfishCountArray(lanternfish)
     for (_ <- 1 to days) {
       val newLanternfish = countArray(0)
-      shiftDays(countArray)
-      addNewLanternfish(countArray, newLanternfish)
+      for (days <- 1 to 8)
+        countArray(days - 1) = countArray(days)
+      countArray(6) += newLanternfish
+      countArray(8) = newLanternfish
     }
     countArray.sum
   }
@@ -18,16 +20,5 @@ object LanternfishCounter {
       case (i, value) => array(i) = value.length
     }
     array
-  }
-
-  private def shiftDays(countArray: Array[Long]): Unit =
-    for (days <- 1 to 8) {
-      val newCount = countArray(days)
-      countArray(days - 1) = newCount
-    }
-
-  private def addNewLanternfish(countArray: Array[Long], newLanternfish: Long): Unit = {
-    countArray(6) += newLanternfish
-    countArray(8) = newLanternfish
   }
 }
