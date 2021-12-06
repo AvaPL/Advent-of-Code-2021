@@ -1,31 +1,33 @@
 package day6
 
-import scala.collection.mutable
-
 object LanternfishCounter {
 
   def count(lanternfish: Seq[Int], days: Int): Long = {
-    val lanternfishToCountMap = countMap(lanternfish)
+    val countArray = lanternfishCountArray(lanternfish)
     for (_ <- 1 to days) {
-      val newLanternfish = lanternfishToCountMap.getOrElse(0, 0L)
-      shiftDays(lanternfishToCountMap)
-      addNewLanternfish(lanternfishToCountMap, newLanternfish)
+      val newLanternfish = countArray(0)
+      shiftDays(countArray)
+      addNewLanternfish(countArray, newLanternfish)
     }
-    lanternfishToCountMap.values.sum
+    countArray.sum
   }
 
-  private def countMap(lanternfish: Seq[Int]) =
-    lanternfish.groupBy(identity).view.mapValues(_.length.toLong).to(mutable.Map)
+  private def lanternfishCountArray(lanternfish: Seq[Int]) = {
+    val array = Array.fill(9)(0L)
+    lanternfish.groupBy(identity).foreach {
+      case (i, value) => array(i) = value.length
+    }
+    array
+  }
 
-  private def shiftDays(lanternfishToCountMap: mutable.Map[Int, Long]): Unit =
+  private def shiftDays(countArray: Array[Long]): Unit =
     for (days <- 1 to 8) {
-      val newCount = lanternfishToCountMap.getOrElse(days, 0L)
-      lanternfishToCountMap.update(days - 1, newCount)
+      val newCount = countArray(days)
+      countArray(days - 1) = newCount
     }
 
-  private def addNewLanternfish(lanternfishToCountMap: mutable.Map[Int, Long], newLanternfish: Long): Unit = {
-    val newDay6 = lanternfishToCountMap.getOrElse(6, 0L) + newLanternfish
-    lanternfishToCountMap.update(6, newDay6)
-    lanternfishToCountMap.update(8, newLanternfish)
+  private def addNewLanternfish(countArray: Array[Long], newLanternfish: Long): Unit = {
+    countArray(6) += newLanternfish
+    countArray(8) = newLanternfish
   }
 }
