@@ -1,9 +1,7 @@
 package day9
 
-import util.{FileReader, InputParser}
 import util.InputParser._
-
-import scala.math.abs
+import util.{FileReader, InputParser}
 
 object Puzzle1InputParser extends InputParser[Seq[Seq[Int]]] {
   override def parse(string: String): Seq[Seq[Int]] =
