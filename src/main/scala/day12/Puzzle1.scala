@@ -24,10 +24,10 @@ object Puzzle1InputParser extends InputParser[Map[String, Set[String]]] {
 object Puzzle1 extends App {
   val input = FileReader.readUnsafe("input/day12/puzzle1.txt")
   val caves = Puzzle1InputParser.parse(input)
-  val paths = countPathsToEnd(Cave.startName)
+  val paths = countPaths(startFrom = Cave.startName, visitedSmallCaves = Set.empty)
   println(paths)
 
-  private def countPathsToEnd(startFrom: String, visitedSmallCaves: Set[String] = Set.empty): Int = {
+  private def countPaths(startFrom: String, visitedSmallCaves: Set[String]): Int = {
     if (startFrom == Cave.endName) 1
     else {
       val cavesToVisit = caves(startFrom).diff(visitedSmallCaves).toSeq
@@ -35,7 +35,7 @@ object Puzzle1 extends App {
         cave <- cavesToVisit
       } yield {
         val newVisitedSmallCaves = visitedSmallCaves ++ Option.when(isSmall(cave))(cave)
-        countPathsToEnd(cave, newVisitedSmallCaves)
+        countPaths(cave, newVisitedSmallCaves)
       }
       visitedCavesPaths.sum
     }
