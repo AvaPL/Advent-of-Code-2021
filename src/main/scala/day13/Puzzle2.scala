@@ -37,7 +37,7 @@ object Puzzle2InputParser extends InputParser[(Set[(Int, Int)], Seq[(Axis, Int)]
 }
 
 object Puzzle2 extends App {
-  val input = FileReader.readUnsafe("input/day13/puzzle1.txt")
+  val input = FileReader.readUnsafe("input/day13/puzzle2.txt")
   val (dots, folds) = Puzzle2InputParser.parse(input)
   val afterFolds = folds.foldLeft(dots) {
     case (dots, (axis, axisPosition)) => dots.map {
