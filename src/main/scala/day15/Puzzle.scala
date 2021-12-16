@@ -47,10 +47,9 @@ object Puzzle extends App {
   }
 
   // Uses various optimizations to avoid boxing issues and GC while being more or less readable
-  // It is definitely not an efficient implementation of Dijkstra
   private def dijkstra(riskLevels: Seq[Seq[Int]], upperBound: Int) = {
     case class Position(totalRisk: Int, index: (Int, Int)) extends Ordered[Position] {
-      override def compare(that: Position): Int = totalRisk.compareTo(that.totalRisk)
+      override def compare(that: Position): Int = that.totalRisk.compareTo(totalRisk)
     }
     val shortestPaths = Array.fill(riskLevels.length)(Array.fill(riskLevels.head.length)(Int.MaxValue))
     val visitedPositions = mutable.PriorityQueue[Position]()
