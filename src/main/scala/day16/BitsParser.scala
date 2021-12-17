@@ -28,7 +28,13 @@ case class Literal(header: PacketHeader, number: LiteralNumber) extends Packet
 
 case class OperatorLengthTypeId(id: Int)
 
-case class OperatorPacketHeader(packetHeader: PacketHeader, lengthTypeId: OperatorLengthTypeId)
+sealed trait OperatorLength
+
+case class OperatorTotalLength(bits: Int) extends OperatorLength
+
+case class OperatorSubpacketsCount(count: Int) extends OperatorLength
+
+case class OperatorPacketHeader(packetHeader: PacketHeader, length: OperatorLength)
 
 case class OperatorSubpackets(subpackets: List[Packet])
 
@@ -68,21 +74,38 @@ trait BitsParser extends RegexParsers {
         LiteralNumber(hexValue.hexToInt)
     }
 
-  def literal: Parser[Literal] =
-    packetHeader ~ literalNumber <~ padding.? ^^ { case header ~ number => Literal(header, number) }
+  def literal: Parser[Literal] = {
+    val parser = packetHeader.filter(_.packetType.id == 4) ~ literalNumber ^^ { case header ~ number => Literal(header, number) }
+    parser | (parser <~ padding)
+  }
 
 
   def operatorLengthTypeId: Parser[OperatorLengthTypeId] =
     """[01]""".r ^^ { id => OperatorLengthTypeId(id.binToInt) }
 
+  def operatorLength(lengthTypeId: OperatorLengthTypeId): Parser[OperatorLength] =
+    lengthTypeId.id match { // TODO: Change OperatorLengthTypeId to enum?
+      case 0 => """[01]{15}""".r ^^ { bits => OperatorTotalLength(bits.binToInt) }
+      case 1 => """[01]{11}""".r ^^ { count => OperatorSubpacketsCount(count.binToInt) }
+    }
+
   def operatorPacketHeader: Parser[OperatorPacketHeader] =
-    packetHeader ~ operatorLengthTypeId ^^ { case packetHeader ~ operatorLengthTypeId => OperatorPacketHeader(packetHeader, operatorLengthTypeId) }
+    packetHeader ~ (operatorLengthTypeId >> operatorLength) ^^ { case packetHeader ~ length => OperatorPacketHeader(packetHeader, length) }
 
-  def operatorSubpackets: Parser[OperatorSubpackets] =
-    (literal | operator).* ^^ { subpackets => OperatorSubpackets(subpackets) }
+  def operatorSubpackets(length: OperatorLength): Parser[OperatorSubpackets] = {
+    length match {
+      case OperatorSubpacketsCount(count) =>
+        repN(count, literal | operator) ^^ { subpackets => OperatorSubpackets(subpackets) }
+      case OperatorTotalLength(bits) =>
+        val subpacketsParser = (literal | operator).* ^^ { subpackets => OperatorSubpackets(subpackets) }
+        s"""[01]{$bits}""".r.map(parseAll(subpacketsParser, _).get) // Quite error prone because vertical parsing is not supported
+    }
+  }
 
-  def operator: Parser[Operator] =
-    operatorPacketHeader ~ operatorSubpackets <~ padding.? ^^ { case header ~ subpackets => Operator(header, subpackets) }
+  def operator: Parser[Operator] = {
+    val parser = operatorPacketHeader >> { header => operatorSubpackets(header.length) ^^ { subpackets => Operator(header, subpackets) } }
+    parser | (parser <~ padding)
+  }
 }
 
 object BitsParser {
