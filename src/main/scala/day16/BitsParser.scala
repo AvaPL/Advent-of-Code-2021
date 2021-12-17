@@ -43,6 +43,12 @@ case class Operator(header: OperatorPacketHeader, subpackets: OperatorSubpackets
 
 trait BitsParser extends RegexParsers {
 
+  def packet: Parser[Packet] =
+    literal | operator
+
+  def paddedPacket: Parser[Packet] =
+    packet <~ padding.?
+
   def padding: Parser[Padding.type] =
     """0.+""".r ^^ { _ => Padding }
 
@@ -74,10 +80,8 @@ trait BitsParser extends RegexParsers {
         LiteralNumber(hexValue.hexToInt)
     }
 
-  def literal: Parser[Literal] = {
-    val parser = packetHeader.filter(_.packetType.id == 4) ~ literalNumber ^^ { case header ~ number => Literal(header, number) }
-    parser | (parser <~ padding)
-  }
+  def literal: Parser[Literal] =
+    packetHeader.filter(_.packetType.id == 4) ~ literalNumber ^^ { case header ~ number => Literal(header, number) }
 
 
   def operatorLengthTypeId: Parser[OperatorLengthTypeId] =
@@ -92,20 +96,17 @@ trait BitsParser extends RegexParsers {
   def operatorPacketHeader: Parser[OperatorPacketHeader] =
     packetHeader ~ (operatorLengthTypeId >> operatorLength) ^^ { case packetHeader ~ length => OperatorPacketHeader(packetHeader, length) }
 
-  def operatorSubpackets(length: OperatorLength): Parser[OperatorSubpackets] = {
+  def operatorSubpackets(length: OperatorLength): Parser[OperatorSubpackets] =
     length match {
       case OperatorSubpacketsCount(count) =>
-        repN(count, literal | operator) ^^ { subpackets => OperatorSubpackets(subpackets) }
+        repN(count, packet) ^^ { subpackets => OperatorSubpackets(subpackets) }
       case OperatorTotalLength(bits) =>
-        val subpacketsParser = (literal | operator).* ^^ { subpackets => OperatorSubpackets(subpackets) }
+        val subpacketsParser = packet.* ^^ { subpackets => OperatorSubpackets(subpackets) }
         s"""[01]{$bits}""".r.map(parseAll(subpacketsParser, _).get) // Quite error prone because vertical parsing is not supported
     }
-  }
 
-  def operator: Parser[Operator] = {
-    val parser = operatorPacketHeader >> { header => operatorSubpackets(header.length) ^^ { subpackets => Operator(header, subpackets) } }
-    parser | (parser <~ padding)
-  }
+  def operator: Parser[Operator] =
+    operatorPacketHeader >> { header => operatorSubpackets(header.length) ^^ { subpackets => Operator(header, subpackets) } }
 }
 
 object BitsParser {
