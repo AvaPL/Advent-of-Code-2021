@@ -17,7 +17,7 @@ object Puzzle2 extends App with BitsParser {
   val packetValue = evaluatePacketValue(parsedPacket)
   println(packetValue)
 
-  def evaluatePacketValue(packet: Packet): Long =
+  private def evaluatePacketValue(packet: Packet): Long =
     packet match {
       case Literal(_, number) => number
       case Operator(_, packetType: OperatorPacket, subpackets) =>

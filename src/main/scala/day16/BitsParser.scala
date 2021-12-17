@@ -4,12 +4,6 @@ import day16.BitsParser.BitsStringOps
 
 import scala.util.parsing.combinator._
 
-
-sealed trait Packet
-
-case object Padding
-
-
 sealed trait PacketType
 
 case object LiteralPacket extends PacketType
@@ -31,8 +25,9 @@ case object LessThanPacket extends OperatorPacket
 case object EqualToPacket extends OperatorPacket
 
 
-case class Literal(version: Int, number: Long) extends Packet
+sealed trait Packet
 
+case class Literal(version: Int, number: Long) extends Packet
 
 sealed trait OperatorLength
 
@@ -41,6 +36,9 @@ case class OperatorTotalLength(bits: Int) extends OperatorLength
 case class OperatorSubpacketsCount(count: Int) extends OperatorLength
 
 case class Operator(version: Int, packetType: PacketType, subpackets: List[Packet]) extends Packet
+
+
+case object Padding
 
 
 trait BitsParser extends RegexParsers {
@@ -53,16 +51,17 @@ trait BitsParser extends RegexParsers {
 
 
   def literal: Parser[Literal] =
-    (packetVersion <~ packetType.filter(_ == LiteralPacket)) ~ literalNumber ^^ {
-      case version ~ number => Literal(version, number)
-    }
+    (packetVersion <~ literalPacketType) ~ literalNumber ^^ { case version ~ number => Literal(version, number) }
 
-  private[day16] def packetVersion: Parser[Int] =
+  private[day16] def packetVersion =
     """[01]{3}""".r ^^ {
       _.binToInt
     }
 
-  private[day16] def packetType: Parser[PacketType] =
+  private def literalPacketType =
+    packetType.filter(_ == LiteralPacket)
+
+  private[day16] def packetType =
     """[01]{3}""".r ^^ {
       _.binToInt
     } ^^ {
@@ -96,11 +95,14 @@ trait BitsParser extends RegexParsers {
 
 
   def operator: Parser[Operator] =
-    (packetVersion ~ (packetType ^? { case packetType: OperatorPacket => packetType })) ~ (operatorLength >> operatorSubpackets) ^^ {
+    packetVersion ~ operatorPacketType ~ (operatorLength >> operatorSubpackets) ^^ {
       case version ~ packetType ~ subpackets => Operator(version, packetType, subpackets)
     }
 
-  private def operatorLength: Parser[OperatorLength] =
+  private def operatorPacketType =
+    packetType ^? { case packetType: OperatorPacket => packetType }
+
+  private def operatorLength =
     ("""[01]""".r ^^ {
       _.binToInt
     }) >> {
@@ -108,14 +110,12 @@ trait BitsParser extends RegexParsers {
       case 1 => """[01]{11}""".r ^^ { count => OperatorSubpacketsCount(count.binToInt) }
     }
 
-  private def operatorSubpackets(length: OperatorLength): Parser[List[Packet]] =
+  private def operatorSubpackets(length: OperatorLength) =
     length match {
       case OperatorSubpacketsCount(count) => repN(count, packet)
       case OperatorTotalLength(bits) => s"""[01]{$bits}""".r ^^ {
         parseAll(packet.*, _)
-      } ^? {
-        case Success(packets, _) => packets
-      }
+      } ^? { case Success(packets, _) => packets }
     }
 }
 

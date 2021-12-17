@@ -17,7 +17,7 @@ object Puzzle1 extends App with BitsParser {
   val versionSum = sumVersions(parsedPacket)
   println(versionSum)
 
-  def sumVersions(packet: Packet): Int =
+  private def sumVersions(packet: Packet): Int =
     packet match {
       case Literal(version, _) => version
       case Operator(version, _, subpackets) => version + subpackets.map(sumVersions).sum
