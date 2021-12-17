@@ -37,7 +37,7 @@ class BitsParserTest extends AnyWordSpec with Matchers with Inspectors with Bits
       "parse" in {
         val input = "110100101111111000101000"
 
-        val parsedLiteral = parseAll(paddedPacket, input)
+        val parsedLiteral = parse(packet, input)
 
         val expected = Literal(PacketHeader(PacketVersion(6), PacketType(4)), LiteralNumber(2021))
         parsedLiteral.get should be(expected)
@@ -50,7 +50,7 @@ class BitsParserTest extends AnyWordSpec with Matchers with Inspectors with Bits
       "given a valid operator with 2 packets" in {
         val input = "00111000000000000110111101000101001010010001001000000000"
 
-        val parsedOperator = parseAll(paddedPacket, input)
+        val parsedOperator = parse(packet, input)
 
         val expectedHeader = OperatorPacketHeader(PacketHeader(PacketVersion(1), PacketType(6)), OperatorTotalLength(27))
         val expectedFirstPacket = Literal(PacketHeader(PacketVersion(6), PacketType(4)), LiteralNumber(10))
@@ -62,7 +62,7 @@ class BitsParserTest extends AnyWordSpec with Matchers with Inspectors with Bits
       "given a valid operator with 3 packets" in {
         val input = "11101110000000001101010000001100100000100011000001100000"
 
-        val parsedOperator = parseAll(paddedPacket, input)
+        val parsedOperator = parse(packet, input)
 
         val expectedHeader = OperatorPacketHeader(PacketHeader(PacketVersion(7), PacketType(3)), OperatorSubpacketsCount(3))
         val expectedFirstPacket = Literal(PacketHeader(PacketVersion(2), PacketType(4)), LiteralNumber(1))
@@ -78,9 +78,9 @@ class BitsParserTest extends AnyWordSpec with Matchers with Inspectors with Bits
           "620080001611562C8802118E34",
           "C0015000016115A2E0802F182340",
           "A0016C880162017C3686B18A3D4780"
-        ).map(BigInt(_, 16).toString(2))
+        ).map(PuzzleInputParser.parse)
 
-        val parsingResults = inputs.map(parseAll(paddedPacket, _))
+        val parsingResults = inputs.map(parse(packet, _))
 
         forAll(parsingResults)(_.successful should be(true))
       }

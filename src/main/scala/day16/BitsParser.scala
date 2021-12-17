@@ -46,9 +46,6 @@ trait BitsParser extends RegexParsers {
   def packet: Parser[Packet] =
     literal | operator
 
-  def paddedPacket: Parser[Packet] =
-    packet <~ padding.?
-
   def padding: Parser[Padding.type] =
     """0.+""".r ^^ { _ => Padding }
 
