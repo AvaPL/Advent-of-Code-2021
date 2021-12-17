@@ -20,6 +20,6 @@ object Puzzle1 extends App with BitsParser {
   def sumVersions(packet: Packet): Int =
     packet match {
       case Literal(version, _) => version
-      case Operator(version, subpackets) => version + subpackets.map(sumVersions).sum
+      case Operator(version, _, subpackets) => version + subpackets.map(sumVersions).sum
     }
 }

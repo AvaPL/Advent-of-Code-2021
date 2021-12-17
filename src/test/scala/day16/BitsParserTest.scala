@@ -53,7 +53,7 @@ class BitsParserTest extends AnyWordSpec with Matchers with Inspectors with Bits
 
         val expectedFirstPacket = Literal(version = 6, number = 10)
         val expectedSecondPacket = Literal(version = 2, number = 20)
-        val expected = Operator(version = 1, subpackets = List(expectedFirstPacket, expectedSecondPacket))
+        val expected = Operator(version = 1, LessThanPacket, subpackets = List(expectedFirstPacket, expectedSecondPacket))
         parsedOperator.get should be(expected)
       }
 
@@ -65,7 +65,7 @@ class BitsParserTest extends AnyWordSpec with Matchers with Inspectors with Bits
         val expectedFirstPacket = Literal(version = 2, number = 1)
         val expectedSecondPacket = Literal(version = 4, number = 2)
         val expectedThirdPacket = Literal(version = 1, number = 3)
-        val expected = Operator(version = 7, subpackets = List(expectedFirstPacket, expectedSecondPacket, expectedThirdPacket))
+        val expected = Operator(version = 7, MaximumPacket, subpackets = List(expectedFirstPacket, expectedSecondPacket, expectedThirdPacket))
         parsedOperator.get should be(expected)
       }
 
