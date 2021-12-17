@@ -17,7 +17,7 @@ case object LiteralPacket extends PacketType
 case object OperatorPacket extends PacketType
 
 
-case class Literal(version: Int, number: Int) extends Packet
+case class Literal(version: Int, number: Long) extends Packet
 
 
 sealed trait OperatorLength
@@ -60,7 +60,7 @@ trait BitsParser extends RegexParsers {
     literalNumberGroup.* ~ lastLiteralNumberGroup ^^ {
       case literalNumberGroups ~ lastLiteralNumberGroup =>
         val hexValue = s"${literalNumberGroups.mkString}$lastLiteralNumberGroup"
-        hexValue.hexToInt
+        hexValue.hexToLong
     }
   }
 
@@ -105,6 +105,6 @@ object BitsParser {
 
     def binToSingleHex: Char = BigInt(string, 2).toString(16).head.toUpper
 
-    def hexToInt: Int = Integer.parseInt(string, 16)
+    def hexToLong: Long = java.lang.Long.parseLong(string, 16)
   }
 }

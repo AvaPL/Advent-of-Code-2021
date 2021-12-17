@@ -75,7 +75,7 @@ class BitsParserTest extends AnyWordSpec with Matchers with Inspectors with Bits
           "620080001611562C8802118E34",
           "C0015000016115A2E0802F182340",
           "A0016C880162017C3686B18A3D4780"
-        ).map(PuzzleInputParser.parse)
+        ).map(Puzzle1InputParser.parse)
 
         val parsingResults = inputs.map(parse(packet, _))
 
