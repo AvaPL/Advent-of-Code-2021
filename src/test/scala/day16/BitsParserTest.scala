@@ -11,10 +11,10 @@ class BitsParserTest extends AnyWordSpec with Matchers with Inspectors with Bits
       "parse" in {
         val input = "100100"
 
+        val packetHeader = packetVersion ~ packetType ^^ { case version ~ packetType => (version, packetType) }
         val parsedPacketHeader = parseAll(packetHeader, input)
 
-        val expected = PacketHeader(PacketVersion(4), PacketType(4))
-        parsedPacketHeader.get should be(expected)
+        parsedPacketHeader.get should be((4, LiteralPacket))
       }
     }
   }
@@ -26,8 +26,7 @@ class BitsParserTest extends AnyWordSpec with Matchers with Inspectors with Bits
 
         val parsedLiteralNumber = parseAll(literalNumber, input)
 
-        val expected = LiteralNumber(2021)
-        parsedLiteralNumber.get should be(expected)
+        parsedLiteralNumber.get should be(2021)
       }
     }
   }
@@ -39,7 +38,7 @@ class BitsParserTest extends AnyWordSpec with Matchers with Inspectors with Bits
 
         val parsedLiteral = parse(packet, input)
 
-        val expected = Literal(PacketHeader(PacketVersion(6), PacketType(4)), LiteralNumber(2021))
+        val expected = Literal(version = 6, number = 2021)
         parsedLiteral.get should be(expected)
       }
     }
@@ -52,10 +51,9 @@ class BitsParserTest extends AnyWordSpec with Matchers with Inspectors with Bits
 
         val parsedOperator = parse(packet, input)
 
-        val expectedHeader = OperatorPacketHeader(PacketHeader(PacketVersion(1), PacketType(6)), OperatorTotalLength(27))
-        val expectedFirstPacket = Literal(PacketHeader(PacketVersion(6), PacketType(4)), LiteralNumber(10))
-        val expectedSecondPacket = Literal(PacketHeader(PacketVersion(2), PacketType(4)), LiteralNumber(20))
-        val expected = Operator(expectedHeader, OperatorSubpackets(List(expectedFirstPacket, expectedSecondPacket)))
+        val expectedFirstPacket = Literal(version = 6, number = 10)
+        val expectedSecondPacket = Literal(version = 2, number = 20)
+        val expected = Operator(version = 1, subpackets = List(expectedFirstPacket, expectedSecondPacket))
         parsedOperator.get should be(expected)
       }
 
@@ -64,11 +62,10 @@ class BitsParserTest extends AnyWordSpec with Matchers with Inspectors with Bits
 
         val parsedOperator = parse(packet, input)
 
-        val expectedHeader = OperatorPacketHeader(PacketHeader(PacketVersion(7), PacketType(3)), OperatorSubpacketsCount(3))
-        val expectedFirstPacket = Literal(PacketHeader(PacketVersion(2), PacketType(4)), LiteralNumber(1))
-        val expectedSecondPacket = Literal(PacketHeader(PacketVersion(4), PacketType(4)), LiteralNumber(2))
-        val expectedThirdPacket = Literal(PacketHeader(PacketVersion(1), PacketType(4)), LiteralNumber(3))
-        val expected = Operator(expectedHeader, OperatorSubpackets(List(expectedFirstPacket, expectedSecondPacket, expectedThirdPacket)))
+        val expectedFirstPacket = Literal(version = 2, number = 1)
+        val expectedSecondPacket = Literal(version = 4, number = 2)
+        val expectedThirdPacket = Literal(version = 1, number = 3)
+        val expected = Operator(version = 7, subpackets = List(expectedFirstPacket, expectedSecondPacket, expectedThirdPacket))
         parsedOperator.get should be(expected)
       }
 
