@@ -3,16 +3,10 @@ package day18
 import util.InputParser._
 import util.{FileReader, InputParser}
 
-import java.util
-
-case class SnailfishNumberNode(value: Int, depth: Int)
-
-// TODO: Simplify util.* types
-
-object Puzzle1v2InputParser extends InputParser[Seq[util.LinkedList[SnailfishNumberNode]]] {
-  override def parse(string: String): Seq[util.LinkedList[SnailfishNumberNode]] =
+object Puzzle1InputParser extends InputParser[Seq[SnailfishNumber]] {
+  override def parse(string: String): Seq[SnailfishNumber] =
     string.splitLines.map { line =>
-      val list = new util.LinkedList[SnailfishNumberNode]()
+      val list = new SnailfishNumber()
       var depth = 0
       for (char <- line) {
         char match {
@@ -21,21 +15,23 @@ object Puzzle1v2InputParser extends InputParser[Seq[util.LinkedList[SnailfishNum
           case ',' =>
           case digitChar =>
             val value = digitChar.asDigit
-            list.offerLast(SnailfishNumberNode(value, depth))
+            list.offerLast(Node(value, depth))
         }
       }
       list
     }
 }
 
-object Puzzle1v2 extends App {
-  val input = FileReader.readUnsafe("input/day18/puzzlex.txt")
-  val numbers = Puzzle1v2InputParser.parse(input)
+// This solution uses stateful operations, it's more Java-ish that idiomatic Scala
+object Puzzle1 extends App {
+  val input = FileReader.readUnsafe("input/day18/puzzle1.txt")
+  val numbers = Puzzle1InputParser.parse(input)
   val numbersSum = sum(numbers)
-  println(numbersSum)
+  val sumMagnitude = magnitude(numbersSum)
+  println(sumMagnitude)
 
-  private def sum(numbers: Seq[util.LinkedList[SnailfishNumberNode]]): util.LinkedList[SnailfishNumberNode] = {
-    val result = new util.LinkedList[SnailfishNumberNode]()
+  private def sum(numbers: Seq[SnailfishNumber]): SnailfishNumber = {
+    val result = new SnailfishNumber()
     result.addAll(numbers.head)
     numbers.tail.foreach { number =>
       result.addAll(number)
@@ -45,7 +41,7 @@ object Puzzle1v2 extends App {
     result
   }
 
-  private def incrementDepth(number: util.LinkedList[SnailfishNumberNode]): Unit = {
+  private def incrementDepth(number: SnailfishNumber): Unit = {
     val iterator = number.listIterator()
     while (iterator.hasNext) {
       val node = iterator.next()
@@ -53,7 +49,7 @@ object Puzzle1v2 extends App {
     }
   }
 
-  private def reduceNumber(number: util.LinkedList[SnailfishNumberNode]): Unit = {
+  private def reduceNumber(number: SnailfishNumber): Unit = {
     var needsReduction = true
     var iterator = number.listIterator()
     while (needsReduction) {
@@ -65,7 +61,7 @@ object Puzzle1v2 extends App {
     }
   }
 
-  private def explode(iterator: util.ListIterator[SnailfishNumberNode]): Unit = {
+  private def explode(iterator: SnailfishNumberIterator): Unit = {
     while (iterator.hasNext) {
       val left = iterator.next()
       if (left.depth > 4)
@@ -73,40 +69,30 @@ object Puzzle1v2 extends App {
     }
   }
 
-  /**
-   * Assumes that depth is 5. After the explosion iterator is placed before the exploded number.
-   *
-   * @example
-   * Before: [[[[3, [1, 2]], 4], 5], 6]
-   * ----------------^
-   * After: [[[4, 0], 6], 5], 6]
-   * ----------^
-   *
-   */
-  private def explodeCurrentPair(iterator: util.ListIterator[SnailfishNumberNode], left: SnailfishNumberNode): Unit = {
+  private def explodeCurrentPair(iterator: SnailfishNumberIterator, left: Node): Unit = {
     iterator.remove()
     addToLeft(iterator, left.value)
     val right = iterator.next()
-    iterator.set(SnailfishNumberNode(0, 4))
+    iterator.set(Node(0, 4))
     addToRight(iterator, right.value)
     iterator.previous()
     iterator.previous()
   }
 
-  private def addToLeft(iterator: util.ListIterator[SnailfishNumberNode], value: Int): Unit =
+  private def addToLeft(iterator: SnailfishNumberIterator, value: Int): Unit =
     if (iterator.hasPrevious) {
       val previous = iterator.previous()
       iterator.set(previous.copy(value = previous.value + value))
       iterator.next()
     }
 
-  private def addToRight(iterator: util.ListIterator[SnailfishNumberNode], value: Int): Unit =
+  private def addToRight(iterator: SnailfishNumberIterator, value: Int): Unit =
     if (iterator.hasNext) {
       val next = iterator.next()
       iterator.set(next.copy(value = next.value + value))
     }
 
-  private def split(iterator: util.ListIterator[SnailfishNumberNode]): Unit = {
+  private def split(iterator: SnailfishNumberIterator): Unit = {
     var splitOccurred = false
     while (!splitOccurred && iterator.hasNext) {
       val number = iterator.next()
@@ -117,22 +103,44 @@ object Puzzle1v2 extends App {
     }
   }
 
-  /**
-   * Splits only one number. After the split iterator is placed on before the split result.
-   *
-   * @example
-   * Before: [3, 11]
-   * ------------^
-   * After: [3, [5, 6]]
-   * --------^
-   */
-  private def splitNumber(iterator: util.ListIterator[SnailfishNumberNode], number: SnailfishNumberNode): Unit = {
+  private def splitNumber(iterator: SnailfishNumberIterator, number: Node): Unit = {
     val left = number.value / 2
     val right = number.value / 2 + number.value % 2
     val depth = number.depth + 1
-    iterator.set(SnailfishNumberNode(left, depth))
-    iterator.add(SnailfishNumberNode(right, depth))
+    iterator.set(Node(left, depth))
+    iterator.add(Node(right, depth))
     iterator.previous()
     iterator.previous()
+  }
+
+  private def magnitude(number: SnailfishNumber) = {
+    val iterator = number.listIterator()
+    var previous = iterator.next()
+    while (iterator.hasNext) {
+      val next = iterator.next()
+      if (next.depth == previous.depth) {
+        val magnitude = calculateMagnitude(iterator, previous, next)
+        previous = setPrevious(iterator, previous, magnitude)
+      } else previous = next
+    }
+    number.get(0).value
+  }
+
+  private def calculateMagnitude(iterator: MagnitudeIterator, previous: Node, next: Node) = {
+    iterator.remove()
+    iterator.previous()
+    val magnitude = Node(3 * previous.value + 2 * next.value, previous.depth - 1)
+    iterator.set(magnitude)
+    magnitude
+  }
+
+  private def setPrevious(iterator: MagnitudeIterator, previous: Node, magnitude: Node): Node = {
+    var newPrevious = previous
+    if (iterator.hasPrevious) {
+      newPrevious = iterator.previous()
+      iterator.next()
+    } else if (magnitude.depth > 0)
+      newPrevious = iterator.next()
+    newPrevious
   }
 }
