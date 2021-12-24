@@ -3,7 +3,7 @@ package day18
 import util.InputParser._
 import util.{FileReader, InputParser}
 
-object Puzzle1InputParser extends InputParser[Seq[SnailfishNumber]] {
+object Puzzle2InputParser extends InputParser[Seq[SnailfishNumber]] {
   override def parse(string: String): Seq[SnailfishNumber] =
     string.splitLines.map { line =>
       val list = new SnailfishNumber()
@@ -23,12 +23,14 @@ object Puzzle1InputParser extends InputParser[Seq[SnailfishNumber]] {
 }
 
 // This solution uses stateful operations, it's more Java-ish that idiomatic Scala
-object Puzzle1 extends App {
-  val input = FileReader.readUnsafe("input/day18/puzzle1.txt")
-  val numbers = Puzzle1InputParser.parse(input)
-  val numbersSum = sum(numbers)
-  val sumMagnitude = magnitude(numbersSum)
-  println(sumMagnitude)
+object Puzzle2 extends App {
+  val input = FileReader.readUnsafe("input/day18/puzzle2.txt")
+  val numbers = Puzzle2InputParser.parse(input)
+  val maxMagnitude = numbers.combinations(2).map { numbers =>
+    val numbersSum = sum(numbers)
+    magnitude(numbersSum)
+  }.max
+  println(maxMagnitude)
 
   private def sum(numbers: Seq[SnailfishNumber]): SnailfishNumber = {
     val result = new SnailfishNumber()
@@ -114,7 +116,8 @@ object Puzzle1 extends App {
   }
 
   private def magnitude(number: SnailfishNumber) = {
-    val iterator = number.listIterator()
+    val numberCopy = new SnailfishNumber(number)
+    val iterator = numberCopy.listIterator()
     var previous = iterator.next()
     while (iterator.hasNext) {
       val next = iterator.next()
@@ -123,7 +126,7 @@ object Puzzle1 extends App {
         previous = setPrevious(iterator, previous, magnitude)
       } else previous = next
     }
-    number.get(0).value
+    numberCopy.get(0).value
   }
 
   private def calculateMagnitude(iterator: MagnitudeIterator, previous: Node, next: Node) = {
