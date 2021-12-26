@@ -23,7 +23,7 @@ object Puzzle2InputParser extends InputParser[Seq[Line]] {
 
 object Puzzle2 extends App {
   val input = FileReader.readUnsafe("input/day5/puzzle2.txt")
-  val lines = Puzzle1InputParser.parse(input)
+  val lines = Puzzle2InputParser.parse(input)
   val ventsMap = lines.foldLeft(VentsMap(1000))(_.markLine(_))
   println(ventsMap.countDangerousAreas)
 }
