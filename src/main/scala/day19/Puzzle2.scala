@@ -6,8 +6,9 @@ import util.{FileReader, InputParser}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.math.abs
 
-object Puzzle1InputParser extends InputParser[Seq[Scanner]] {
+object Puzzle2InputParser extends InputParser[Seq[Scanner]] {
   override def parse(string: String): Seq[Scanner] =
     string.splitBlocks.map {
       block =>
@@ -22,19 +23,24 @@ object Puzzle1InputParser extends InputParser[Seq[Scanner]] {
     }
 }
 
-object Puzzle1 extends App {
-  val input = FileReader.readUnsafe("input/day19/puzzle1.txt")
-  val scanners = Puzzle1InputParser.parse(input)
+object Puzzle2 extends App {
+  val input = FileReader.readUnsafe("input/day19/puzzle2.txt")
+  val scanners = Puzzle2InputParser.parse(input)
   val withTranslationsAndRotations = translationsAndRotations(
     knownScanners =
       Seq((Scanner.noTranslation, Scanner.noRotation, scanners.head)),
     unknownScanners = scanners.drop(1)
   )
-  val translatedAndRotatedBeacons = withTranslationsAndRotations.flatMap {
-    case (translation, rotation, Scanner(beacons)) =>
-      beacons.map(rotation * _ + translation)
-  }.toSet
-  println(translatedAndRotatedBeacons.size)
+  val scannersPositions = withTranslationsAndRotations.map {
+    case (translation, _, _) => translation
+  }
+  val largestManhattanDistance = scannersPositions
+    .combinations(2)
+    .map {
+      case Seq(first, second) => (second - first).map(abs).data.sum
+    }
+    .max
+  println(largestManhattanDistance)
 
   @tailrec
   private def translationsAndRotations(
