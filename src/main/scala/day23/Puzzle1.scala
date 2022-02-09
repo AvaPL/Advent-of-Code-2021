@@ -3,6 +3,9 @@ package day23
 import com.softwaremill.quicklens._
 import day23.Amphipods.{Hallway, Room}
 
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
+
 sealed trait Amphipod {
   def energyPerMove: Int
   def destinationRoom: Int
@@ -73,26 +76,40 @@ object Puzzle1 extends App {
   println(minTotalEnergyCost)
 
   private def move(from: Amphipods, to: Amphipods) = {
-    // TODO: Add upperBounds and order calculations by totalEnergyCost + upperBound
+    val upperBounds =
+      mutable.Map[Amphipods, Double]().withDefaultValue(Double.PositiveInfinity)
     var minTotalEnergyCost = Int.MaxValue
 
     def loop(
         from: Amphipods,
         totalEnergyCost: Int = 0,
         visitedStates: Set[Amphipods] = Set.empty
-    ): Unit = {
-      if (totalEnergyCost >= minTotalEnergyCost) ()
+    ): Int = {
+      if (totalEnergyCost >= minTotalEnergyCost) Int.MaxValue
       else if (from == to) {
         println(s"Found! Total energy cost: $totalEnergyCost")
         minTotalEnergyCost = minTotalEnergyCost.min(totalEnergyCost)
+        totalEnergyCost
       } else {
-        val moves = possibleMoves(from).collect {
-          case move @ (state, _) if !visitedStates.contains(state) => move
-        }
-        moves.foreach {
-          case (state, energyCost) =>
+        val moves = ArrayBuffer.from(
+          possibleMoves(from).collect {
+            case move @ (state, _) if !visitedStates.contains(state) => move
+          }
+        )
+        var minCost = Int.MaxValue
+        while (moves.nonEmpty) {
+          moves.sortInPlaceBy {
+            case (state, energyCost) =>
+              totalEnergyCost + energyCost + upperBounds(state)
+          }
+          val (state, energyCost) = moves.head
+          val cost =
             loop(state, totalEnergyCost + energyCost, visitedStates + state)
+          minCost = minCost.min(cost)
+          moves.remove(0)
         }
+        upperBounds.put(from, upperBounds(from).min(minCost))
+        minCost
       }
     }
 
