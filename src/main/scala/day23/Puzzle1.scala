@@ -211,9 +211,7 @@ object Puzzle1 extends App {
           (position1, position2, amphipod)
       }
     val pathX = abs(position1.x - position2.x)
-    val pathY =
-      if (pathX == 0) abs(position1.y - position2.y) // room not changed
-      else position1.y + position2.y // moved through hallway
+    val pathY = position1.y + position2.y
     val pathLength = pathX + pathY
     pathLength * amphipod.energyPerMove
   }
