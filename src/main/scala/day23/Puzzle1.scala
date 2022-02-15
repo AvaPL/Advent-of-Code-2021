@@ -1,5 +1,6 @@
 package day23
 
+import scala.collection.mutable
 import scala.math.abs
 
 sealed trait Room {
@@ -71,26 +72,15 @@ object Position {
 object Puzzle1 extends App {
   type State = Map[Position, Amphipod]
 
-//  val initialState: State = Map(
-//  Position(Room.A.index, 1) -> Amphipod.A,
-//  Position(Room.A.index, 2) -> Amphipod.D,
-//  Position(Room.B.index, 1) -> Amphipod.C,
-//  Position(Room.B.index, 2) -> Amphipod.D,
-//  Position(Room.C.index, 1) -> Amphipod.B,
-//  Position(Room.C.index, 2) -> Amphipod.B,
-//  Position(Room.D.index, 1) -> Amphipod.A,
-//  Position(Room.D.index, 2) -> Amphipod.C
-//  )
-  // Example:
   val initialState: State = Map(
-    Position(Room.A.index, 1) -> Amphipod.B,
-    Position(Room.A.index, 2) -> Amphipod.A,
+    Position(Room.A.index, 1) -> Amphipod.A,
+    Position(Room.A.index, 2) -> Amphipod.D,
     Position(Room.B.index, 1) -> Amphipod.C,
     Position(Room.B.index, 2) -> Amphipod.D,
     Position(Room.C.index, 1) -> Amphipod.B,
-    Position(Room.C.index, 2) -> Amphipod.C,
-    Position(Room.D.index, 1) -> Amphipod.D,
-    Position(Room.D.index, 2) -> Amphipod.A
+    Position(Room.C.index, 2) -> Amphipod.B,
+    Position(Room.D.index, 1) -> Amphipod.A,
+    Position(Room.D.index, 2) -> Amphipod.C
   )
   val expectedState: State = Map(
     Position(Room.A.index, 1) -> Amphipod.A,
@@ -102,10 +92,29 @@ object Puzzle1 extends App {
     Position(Room.D.index, 1) -> Amphipod.D,
     Position(Room.D.index, 2) -> Amphipod.D
   )
-  println(possibleMoves(initialState))
-  println(possibleMoves(expectedState))
+  val energyCost = dijkstra(initialState, expectedState)
+  println(energyCost)
 
-  private def possibleMoves(state: State) = {
+  private def dijkstra(initialState: State, expectedState: State) = {
+    val cheapestCosts = mutable.Map[State, Int]().withDefaultValue(Int.MaxValue)
+    val visitedStates = mutable.PriorityQueue[(State, Int)]()(Ordering.by(_._2))
+    visitedStates.enqueue((initialState, 0))
+    while (visitedStates.nonEmpty) {
+      val (state, energyCost) = visitedStates.dequeue
+      val nextStates = possibleMoves(state)
+      nextStates.foreach {
+        nextState =>
+          val nextEnergyCost = energyCost + moveCost(state, nextState)
+          if (nextEnergyCost < cheapestCosts(nextState)) {
+            cheapestCosts.update(nextState, nextEnergyCost)
+            visitedStates.enqueue((nextState, nextEnergyCost))
+          }
+      }
+    }
+    cheapestCosts(expectedState)
+  }
+
+  private[day23] def possibleMoves(state: State) = {
     lazy val toRoomMoves = possibleToRoomMoves(state)
     lazy val toHallwayMoves = possibleToHallwayMoves(state)
 
@@ -148,7 +157,7 @@ object Puzzle1 extends App {
       roomSpots.toSet
         .diff(occupiedSpots.keySet)
         .toList
-        .minByOption(_.y)
+        .maxByOption(_.y)
     else
       None
   }
@@ -173,7 +182,7 @@ object Puzzle1 extends App {
     val hallwayStopsBetween = Position.hallwayStopsPositions.filter {
       case Position(x, _) => minX < x && x < maxX
     }.toSet
-    occupiedHallwayStops.diff(hallwayStopsBetween).isEmpty
+    occupiedHallwayStops.intersect(hallwayStopsBetween).isEmpty
   }
 
   private def possibleToHallwayMoves(state: State) = {
@@ -204,12 +213,11 @@ object Puzzle1 extends App {
     occupiedSpotsAmphipods.forall(_.destinationRoom == room)
   }
 
-  private def moveCost(state1: State, state2: State) = {
-    val (position1, position2, amphipod) =
-      state1.toSet.diff(state2.toSet).toList match {
-        case (position1 -> amphipod) :: (position2 -> _) :: Nil =>
-          (position1, position2, amphipod)
-      }
+  private[day23] def moveCost(state1: State, state2: State) = {
+    val state1Set = state1.toSet
+    val state2Set = state2.toSet
+    val List(position1 -> amphipod, position2 -> _) =
+      state1Set.union(state2Set).diff(state1Set.intersect(state2Set)).toList
     val pathX = abs(position1.x - position2.x)
     val pathY = position1.y + position2.y
     val pathLength = pathX + pathY
