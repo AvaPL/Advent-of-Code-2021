@@ -1,11 +1,14 @@
 package day23
 
-import day23.Puzzle1.{State, moveCost, possibleMoves}
+import day23.Amphipods.State
 import org.scalatest.Inspectors
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class Puzzle1Test extends AnyWordSpec with Matchers with Inspectors {
+class AmphipodsTest extends AnyWordSpec with Matchers with Inspectors {
+
+  val amphipods: Amphipods = Amphipods(2)
+
   "possibleMoves" when {
     "given final state" should {
       "not have any moves" in {
@@ -20,7 +23,7 @@ class Puzzle1Test extends AnyWordSpec with Matchers with Inspectors {
           Position(Room.D.index, 2) -> Amphipod.D
         )
 
-        possibleMoves(state) shouldBe empty
+        amphipods.possibleMoves(state) shouldBe empty
       }
     }
 
@@ -33,12 +36,12 @@ class Puzzle1Test extends AnyWordSpec with Matchers with Inspectors {
           Position(Room.D.index, 1) -> Amphipod.A
         )
 
-        val moves = possibleMoves(state)
+        val moves = amphipods.possibleMoves(state)
 
         moves.size should be(28)
         forAll(moves) {
           move =>
-            move.exists(_._1.y == Position.hallwayY) should be(true)
+            move.exists(_._1.y == amphipods.hallwayY) should be(true)
         }
       }
     }
@@ -49,7 +52,7 @@ class Puzzle1Test extends AnyWordSpec with Matchers with Inspectors {
           Position(0, 0) -> Amphipod.A
         )
 
-        val moves = possibleMoves(state)
+        val moves = amphipods.possibleMoves(state)
 
         moves.size should be(1)
 
@@ -63,7 +66,7 @@ class Puzzle1Test extends AnyWordSpec with Matchers with Inspectors {
           Position(Room.A.index, 2) -> Amphipod.B
         )
 
-        val moves = possibleMoves(state)
+        val moves = amphipods.possibleMoves(state)
 
         moves.size should be(1)
 
@@ -82,7 +85,7 @@ class Puzzle1Test extends AnyWordSpec with Matchers with Inspectors {
           Position(Room.B.index, 2) -> Amphipod.B
         )
 
-        val energyCost = moveCost(state1, state2)
+        val energyCost = amphipods.moveCost(state1, state2)
 
         energyCost should be(6 * Amphipod.B.energyPerMove)
       }
@@ -95,7 +98,7 @@ class Puzzle1Test extends AnyWordSpec with Matchers with Inspectors {
           Position(Room.B.index, 2) -> Amphipod.B
         )
 
-        val energyCost = moveCost(state1, state2)
+        val energyCost = amphipods.moveCost(state1, state2)
 
         energyCost should be(6 * Amphipod.B.energyPerMove)
       }
