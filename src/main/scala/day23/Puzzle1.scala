@@ -171,7 +171,10 @@ object Puzzle1 extends App {
         state.removed(from).updated(to, amphipod)
     }
 
-  private def isPathValid(
+  private def isPathValid(state: State, from: Position, to: Position) =
+    !hasHallwayCollision(state, from, to) && !isInnerRoomMove(from, to)
+
+  private def hasHallwayCollision(
       state: State,
       from: Position,
       to: Position
@@ -182,8 +185,11 @@ object Puzzle1 extends App {
     val hallwayStopsBetween = Position.hallwayStopsPositions.filter {
       case Position(x, _) => minX < x && x < maxX
     }.toSet
-    occupiedHallwayStops.intersect(hallwayStopsBetween).isEmpty
+    occupiedHallwayStops.intersect(hallwayStopsBetween).nonEmpty
   }
+
+  private def isInnerRoomMove(from: Position, to: Position) =
+    from.x == to.x && from.y != Position.hallwayY && to.y != Position.hallwayY
 
   private def possibleToHallwayMoves(state: State) = {
     val topAmphipods = topSpotsAmphipods(state)
